@@ -19,7 +19,8 @@ function create_posttype() {
    array(
      'labels' => array(
        'name' => __( 'Reviews' ),
-       'singular_name' => __( 'Review' )
+       'singular_name' => __( 'Review' ),
+       'add_new_item' => __('Add new review'),
      ),
      'public' => true,
      'has_archive' => true,
