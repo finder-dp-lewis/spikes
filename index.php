@@ -182,3 +182,55 @@ add_action('save_post', 'templatise_save_post');
 add_action('wp_restore_post_revision', 'templatise_restore_revision', 10, 2);
 add_filter('_wp_post_revision_fields', 'templatise_revision_fields' );
 add_filter('_wp_post_revision_field_my_meta', 'templatise_revision_field', 10, 2);
+
+// see https://www.sitepoint.com/wordpress-pages-use-tags/
+// add tag support to pages
+function tags_support_all() {
+	register_taxonomy_for_object_type('post_tag', 'page');
+}
+
+// ensure all tags are included in queries
+function tags_support_query($wp_query) {
+	if ($wp_query->get('tag')) $wp_query->set('post_type', 'any');
+}
+
+// tag hooks
+add_action('init', 'tags_support_all');
+add_action('pre_get_posts', 'tags_support_query');
+
+
+
+function add_news_tag_taxonomy_to_post(){
+
+    //set the name of the taxonomy
+    $taxonomy = 'news_tag';
+
+    //populate our array of names for our taxonomy
+    $labels = array(
+        'name'               => 'News Tags',
+        'singular_name'      => 'News Tag',
+        'search_items'       => 'Search News Tags',
+        'all_items'          => 'All News Tags',
+        'update_item'        => 'Update News Tag',
+        'edit_item'          => 'Edit News Tag',
+        'add_new_item'       => 'Add New News Tag',
+        'new_item_name'      => 'New News Tag',
+        'menu_name'          => 'News Tags'
+    );
+
+    //define arguments to be used
+    $args = array(
+        'labels'            => $labels,
+        'hierarchical'      => false,
+        'show_ui'           => true,
+        'how_in_nav_menus'  => true,
+        'public'            => true,
+        'show_admin_column' => true,
+        'query_var'         => true,
+        'rewrite'           => false
+    );
+
+    //call the register_taxonomy function
+    register_taxonomy($taxonomy, ['post', 'page'], $args);
+}
+add_action('init','add_news_tag_taxonomy_to_post');
