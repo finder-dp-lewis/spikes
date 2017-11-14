@@ -15,12 +15,12 @@
  */
 
 function create_posttype() {
-    register_post_type( 'review',
+    register_post_type( 'news',
         array(
             'labels' => array(
-                'name' => __( 'Reviews' ),
-                'singular_name' => __( 'Review' ),
-                'add_new_item' => __('Add new review'),
+                'name' => __( 'News' ),
+                'singular_name' => __( 'News' ),
+                'add_new_item' => __('Add News'),
             ),
             'public' => true,
             'has_archive' => true,
@@ -29,109 +29,7 @@ function create_posttype() {
     );
 }
 
-// Set up the editor
-function templatise_aside_callback() {
-   global $post;
 
-   // get value of our custom field
-   $first_field = get_post_meta($post->ID, 'templatise_aside', true);
-
-   // create a nonce for secure saving
-   wp_nonce_field( 'templatise_nonce', 'templatise_nonce' );
-
-   // check if our custom field has content
-   if( $first_field ) {
-       // if it has content, set the $content so we can display it as value in the field
-       $content = $first_field;
-   } else {
-       // if it has no content, just return an empty value
-       $content = '';
-   }
-
-   // create a new instance of the WYSIWYG editor
-   wp_editor( $content, 'templatise_aside_editor' , array(
-       'wpautop'       => true,
-       'textarea_name' => 'templatise_aside', // this is the 'name' attribute of our field
-       'textarea_rows' => 10,
-   ));
-}
-
-// initialise the meta box for adding to the new post type
-function templatise_add_metabox() {
-  add_meta_box(
-      'review_aside', // ID of the metabox
-      'Aside', // title of the metabox
-      'templatise_aside_callback', // callback function, see below
-      'review', // <--- your post-type slug
-      'normal', // context
-      'default' // priority
-  );
-}
-
-// save post handles custom field data and revision data
-function templatise_save_post($post_id) {
-    // check our nonce
-    if ( ! isset( $_POST['templatise_nonce'] ) ||
-    ! wp_verify_nonce( $_POST['templatise_nonce'], 'templatise_nonce' ) )
-        return;
-
-    // check for autosave
-    if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE)
-        return;
-
-    // check if user has rights
-    if (!current_user_can('edit_post', $post_id))
-        return;
-
-    // check if content exists in our custom field
-    if ( isset( $_POST['templatise_aside'] ) ) {
-        $contents = $_POST['templatise_aside'];
-
-        // if content exists than update the meta value
-        update_post_meta( $post_id, 'templatise_aside', $contents );
-    }
-
-    // save for revision purposes
-    // modified from https://johnblackbourn.com/post-meta-revisions-wordpress/
-    $parent_id = wp_is_post_revision( $post_id );
-
-  	if ($parent_id) {
-  		$parent  = get_post( $parent_id );
-  		$my_meta = get_post_meta( $parent->ID, 'templatise_aside', true );
-  		if ( false !== $my_meta ) {
-  			add_metadata( 'post', $post_id, 'templatise_aside', $my_meta );
-      }
-  	}
-}
-
-// restore revision
-// modified from https://johnblackbourn.com/post-meta-revisions-wordpress/
-function templatise_restore_revision( $post_id, $revision_id ) {
-	$post     = get_post( $post_id );
-	$revision = get_post( $revision_id );
-	$my_meta  = get_metadata( 'post', $revision->ID, 'templatise_aside', true );
-
-	if ( false !== $my_meta ) {
-		update_post_meta( $post_id, 'templatise_aside', $my_meta );
-	} else {
-		delete_post_meta( $post_id, 'templatise_aside' );
-  }
-}
-
-
-// review revision
-// modified from https://johnblackbourn.com/post-meta-revisions-wordpress/
-function templatise_revision_fields( $fields ) {
-	$fields['templatise_aside'] = 'Aside';
-	return $fields;
-}
-
-// review revision
-// modified from https://johnblackbourn.com/post-meta-revisions-wordpress/
-function templatise_revision_field( $value, $field ) {
-	global $revision;
-	return get_metadata( 'post', $revision->ID, $field, true );
-}
 
 
 //  https://kellenmace.com/remove-custom-post-type-slug-from-permalinks/
@@ -156,7 +54,7 @@ function gp_add_cpt_post_names_to_main_query( $query ) {
 		return;
 	}
 	// Add CPT to the list of post types WP will include when it queries based on the post name.
-	$query->set( 'post_type', array( 'post', 'page', 'review' ) );
+	$query->set( 'post_type', array( 'post', 'page', 'news' ) );
 }
 add_action( 'pre_get_posts', 'gp_add_cpt_post_names_to_main_query' );
 
@@ -165,7 +63,7 @@ add_action( 'pre_get_posts', 'gp_add_cpt_post_names_to_main_query' );
  */
 function gp_remove_cpt_slug( $post_link, $post, $leavename ) {
 
-    if ( 'review' != $post->post_type || 'publish' != $post->post_status ) {
+    if ( 'news' != $post->post_type || 'publish' != $post->post_status ) {
         return $post_link;
     }
 
@@ -176,17 +74,13 @@ function gp_remove_cpt_slug( $post_link, $post, $leavename ) {
 add_filter( 'post_type_link', 'gp_remove_cpt_slug', 10, 3 );
 
 // Hook into Wordpress
-add_action('admin_init', 'templatise_add_metabox', 1);
 add_action('init', 'create_posttype');
-add_action('save_post', 'templatise_save_post');
-add_action('wp_restore_post_revision', 'templatise_restore_revision', 10, 2);
-add_filter('_wp_post_revision_fields', 'templatise_revision_fields' );
-add_filter('_wp_post_revision_field_my_meta', 'templatise_revision_field', 10, 2);
 
 // see https://www.sitepoint.com/wordpress-pages-use-tags/
 // add tag support to pages
 function tags_support_all() {
 	register_taxonomy_for_object_type('post_tag', 'page');
+	register_taxonomy_for_object_type('post_tag', 'news');
 }
 
 // ensure all tags are included in queries
@@ -231,6 +125,47 @@ function add_news_tag_taxonomy_to_post(){
     );
 
     //call the register_taxonomy function
-    register_taxonomy($taxonomy, ['post', 'page'], $args);
+    register_taxonomy($taxonomy, ['post', 'page', 'news'], $args);
 }
 add_action('init','add_news_tag_taxonomy_to_post');
+
+
+if(function_exists("register_field_group"))
+{
+	register_field_group(array (
+		'id' => 'acf_news',
+		'title' => 'News',
+		'fields' => array (
+			array (
+				'key' => 'field_5a0abc8b09319',
+				'label' => 'Sub Title',
+				'name' => 'sub_title',
+				'type' => 'text',
+				'default_value' => '',
+				'placeholder' => '',
+				'prepend' => '',
+				'append' => '',
+				'formatting' => 'html',
+				'maxlength' => '',
+			),
+		),
+		'location' => array (
+			array (
+				array (
+					'param' => 'post_type',
+					'operator' => '==',
+					'value' => 'news',
+					'order_no' => 0,
+					'group_no' => 0,
+				),
+			),
+		),
+		'options' => array (
+			'position' => 'acf_after_title',
+			'layout' => 'no_box',
+			'hide_on_screen' => array (
+			),
+		),
+		'menu_order' => 0,
+	));
+}
