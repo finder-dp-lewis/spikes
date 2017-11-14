@@ -22,9 +22,11 @@ function create_posttype() {
                 'singular_name' => __( 'News' ),
                 'add_new_item' => __('Add News'),
             ),
+            'taxonomies'  => array( 'category' ),
             'public' => true,
             'has_archive' => true,
-            'supports' => array( 'title', 'editor', 'thumbnail', 'revisions' )
+            'supports' => array( 'title', 'editor', 'thumbnail', 'revisions' ),
+            'rewrite' => array( 'slug' => '/', 'with_front' => false),
         )
     );
 }
