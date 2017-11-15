@@ -132,6 +132,42 @@ function add_news_tag_taxonomy_to_post(){
 add_action('init','add_news_tag_taxonomy_to_post');
 
 
+function add_pathway_tag_taxonomy_to_post(){
+
+    //set the name of the taxonomy
+    $taxonomy = 'pathway_tag';
+
+    //populate our array of names for our taxonomy
+    $labels = array(
+        'name'               => 'Pathway Tags',
+        'singular_name'      => 'Pathway Tag',
+        'search_items'       => 'Search Pathway Tags',
+        'all_items'          => 'All Pathway Tags',
+        'update_item'        => 'Update Pathway Tag',
+        'edit_item'          => 'Edit Pathway Tag',
+        'add_new_item'       => 'Add New Pathway Tag',
+        'new_item_name'      => 'New Pathway Tag',
+        'menu_name'          => 'Pathway Tags'
+    );
+
+    //define arguments to be used
+    $args = array(
+        'labels'            => $labels,
+        'hierarchical'      => false,
+        'show_ui'           => true,
+        'how_in_nav_menus'  => true,
+        'public'            => true,
+        'show_admin_column' => true,
+        'query_var'         => true,
+        'rewrite'           => false
+    );
+
+    //call the register_taxonomy function
+    register_taxonomy($taxonomy, ['post', 'page', 'news'], $args);
+}
+add_action('init','add_pathway_tag_taxonomy_to_post');
+
+
 if(function_exists("register_field_group"))
 {
 	register_field_group(array (
